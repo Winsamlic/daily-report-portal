@@ -1,25 +1,25 @@
-import logo from './logo.svg';
 import './App.css';
+import { HashRouter as Router, Routes, Route } from 'react-router-dom'
+import Login from './pages/auth/Login';
+import Register from './pages/auth/Register';
+import { Provider } from './context';
+import 'bootstrap/dist/css/bootstrap.min.css';
+import RegisterAdmin from './pages/auth/RegisterAdmin';
 
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+    <Provider>
+      <Router>
+        <Routes>
+          <Route path="/" element={<Register />} />
+          <Route path="login" element={<Login />} />
+          <Route path="register" element={<Register />} />
+          <Route path="confirm-admin" element={<RegisterAdmin />} />
+        </Routes>
+      </Router>
+    </Provider>
+  )
+
 }
 
 export default App;
