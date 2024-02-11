@@ -1,4 +1,5 @@
 const nodemailer = require("nodemailer");
+const jwt = require("jsonwebtoken");
 
 exports.sendConfirmationEmail = (email, confirmationCode) => {
 
@@ -33,11 +34,22 @@ exports.sendConfirmationEmail = (email, confirmationCode) => {
     }
 }
 
-exports.sendEmailToAdmin = (userId, email, token) => {
-    return console.log(userId, email, token);
+
+
+exports.sendEmailToAdmin = async (user, email) => {
+    // {
+    //     id: 10,
+    //         username: 'Winston Lichucha',
+    //             email: 'wsl2@gmail.com',
+    //                 iat: 1707670593,
+    //                     exp: 1711126593
+    // } admin @eo.co.mz
+
+    const token = jwt.sign({ user, admin: email }, process.env.JWT_SECRET, { expiresIn: "30m" });
+
 
     try {
-        const confirm = `${process.env.API_URL}/users/confirm-admin/${user}/${email}`
+        const confirm = `${process.env.API_URL}/users/confirm-admin/${token}`
 
         const transporter = nodemailer.createTransport({
             host: 'smtp.ethereal.email',
@@ -50,11 +62,12 @@ exports.sendEmailToAdmin = (userId, email, token) => {
 
         const mailOptions = {
             from: '"Your App" <magla@co.mw>',
-            to: "hannah.renner@ethereal.email",
+            to: email,
             subject: "Confirm Admin Role",
-            text: `User ${user} has requested admin role. Please confirm the request by clicking the link below: ${email}`,
-            html: `<p>User <strong>${user}</strong> has requested admin role. Please confirm the request by clicking the link below: <a href="${confirm}">${email}</a></p>`
+            text: `User ${user.email} has requested admin role. Please confirm the request by clicking the link below: ${email}`,
+            html: `<p>User <strong>${user.username}</strong> has requested admin role. Please confirm the request by clicking the link below: <a href="${confirm}">${email}</a></p>`
         };
+        return mailOptions
 
         transporter.sendMail(mailOptions, (error, info) => {
             if (error) {

@@ -26,7 +26,7 @@ exports.login = async (req, res) => {
 
             // Retrieve the user's hashed password from the database
             const user = results[0];
-            console.log(user);
+            // console.log(user);
             const hashedPassword = user.password;
 
             // Compare the provided password with the hashed password
@@ -36,8 +36,12 @@ exports.login = async (req, res) => {
             }
 
             // Password is correct, generate JWT token
-            const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: "40d" });
-
+            const token = jwt.sign({ id: user.user_id, username: user.name, email: user.email }, process.env.JWT_SECRET, { expiresIn: "40d" });
+            res.cookie("token", token, {
+                httpOnly: true,
+                // sameSite: "none",
+                // secure: true, // only works on https
+            });
             // Return the JWT token along with user data
             res.status(200).json({ user: { id: user.user_id, username: user.name, email: user.email }, token, ok: true });
         });
@@ -119,7 +123,14 @@ exports.registerAdmin = async (req, res) => {
 }
 
 exports.sendMailToAdmin = async (req, res) => {
-    const { userId, email, token } = req.body;
-    sendEmailToAdmin(userId, email, token);
+    const { email } = req.body;
+    // console.log(req.body);
+    try {
+        const resposta = await sendEmailToAdmin(req.user, email);
+        res.status(200).json({ message: "Email sent", ok: true, resposta });
+    } catch (error) {
+        console.log(error);
+    }
+
 }
 
