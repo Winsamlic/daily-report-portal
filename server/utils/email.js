@@ -37,48 +37,47 @@ exports.sendConfirmationEmail = (email, confirmationCode) => {
 
 
 exports.sendEmailToAdmin = async (user, email) => {
-    // {
-    //     id: 10,
-    //         username: 'Winston Lichucha',
-    //             email: 'wsl2@gmail.com',
-    //                 iat: 1707670593,
-    //                     exp: 1711126593
-    // } admin @eo.co.mz
+    return new Promise((resolve, reject) => {
+        try {
+            const token = jwt.sign({ user, admin: email }, process.env.JWT_SECRET, { expiresIn: "30m" });
+            delete token.iat
+            delete token.exp
+            const confirm = `${process.env.DOMAIN + process.env.API_URL}/users/confirm-page/${token}`
 
-    const token = jwt.sign({ user, admin: email }, process.env.JWT_SECRET, { expiresIn: "30m" });
+            const transporter = nodemailer.createTransport({
+                host: 'smtp.ethereal.email',
+                port: 587,
+                auth: {
+                    user: 'hannah.renner@ethereal.email',
+                    pass: 'C3sBPV5g5PgXgSkr8n'
+                }
+            });
+
+            const mailOptions = {
+                from: '"Your App" <magla@co.mw>',
+                to: email,
+                subject: "Confirm Admin Role",
+                text: `User ${user.email} has requested admin role. Please confirm the request by clicking the link below: ${email}`,
+                html: `<p>User <strong>${user.username}</strong> has requested admin role. Please confirm the request by clicking the link below: <a href="${confirm}">${email}</a></p>`
+            };
+
+            transporter.sendMail(mailOptions, (error, info) => {
+                if (error) {
+                    console.error("Error sending confirmation email:", error);
+                    reject({ ok: false }); // Reject the promise with the error
+                } else {
+                    // console.log("Confirmation email sent:", info.response);
+                    resolve({ info: info.response, ok: true }); // Resolve the promise with the response info
+                }
+            });
+        } catch (error) {
+            console.log(error);
+            reject({ ok: false });  // Reject the promise with the error
+        }
+    });
+};
 
 
-    try {
-        const confirm = `${process.env.API_URL}/users/confirm-admin/${token}`
 
-        const transporter = nodemailer.createTransport({
-            host: 'smtp.ethereal.email',
-            port: 587,
-            auth: {
-                user: 'hannah.renner@ethereal.email',
-                pass: 'C3sBPV5g5PgXgSkr8n'
-            }
-        });
-
-        const mailOptions = {
-            from: '"Your App" <magla@co.mw>',
-            to: email,
-            subject: "Confirm Admin Role",
-            text: `User ${user.email} has requested admin role. Please confirm the request by clicking the link below: ${email}`,
-            html: `<p>User <strong>${user.username}</strong> has requested admin role. Please confirm the request by clicking the link below: <a href="${confirm}">${email}</a></p>`
-        };
-        return mailOptions
-
-        transporter.sendMail(mailOptions, (error, info) => {
-            if (error) {
-                console.error("Error sending confirmation email:", error);
-            } else {
-                // console.log("Confirmation email sent:", info.response);
-            }
-        });
-    } catch (error) {
-        console.log(error);
-    }
-}
 
 

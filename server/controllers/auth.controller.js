@@ -89,18 +89,40 @@ exports.register = async (req, res) => {
     }
 };
 
-exports.registerAdmin = async (req, res) => {
+
+exports.sendMailToAdmin = async (req, res) => {
+    const { email } = req.body;
+    const user = req.user;
+    delete user.iat
+    delete user.exp
     try {
-        const { username, email, password } = req.body;
-        // Generate confirmation code
+        const { ok } = await sendEmailToAdmin(user, email);
+        // return console.log(data);
+        // console.log({ ok, info });
+        if (ok) {
+            res.status(200).json({ msg: "Email sent", ok })
+        } else {
+            res.status(500).json({ msg: "Error sending email", ok });
+        }
+
+    } catch (error) {
+        console.log(error);
+    }
+
+}
+
+exports.confirmAdmin = async (req, res, next) => {
+    try {
+
+        const { name, password, email, id } = req.body;
         const confirmationCode = generateRandomNumberString(6) // Generate a random 6-character alphanumeric code
 
         // Hash the password
         const hashedPassword = await bcrypt.hash(password, 10); // 10 is the number of salt rounds
 
         // SQL query to insert the user into the database
-        const sql = `INSERT INTO users (name, email, password, confirmation_code, is_admin) VALUES (?, ?, ?, ?, ?)`;
-        const values = [username, email, hashedPassword, confirmationCode, 1];
+        const sql = `INSERT INTO admins (name, email, password) VALUES (?, ?, ?)`;
+        const values = [name, email, hashedPassword];
 
         // Execute the query
         connection.query(sql, values, async (error, results, fields) => {
@@ -108,29 +130,26 @@ exports.registerAdmin = async (req, res) => {
                 console.error("Error inserting user:", error);
                 return res.status(500).json({ ok: false });
             }
-
+            connection.query(`UPDATE users SET admin_id = ? WHERE user_id = ?`, [results.insertId, id], async (error, results, fields) => {
+                if (error) {
+                    console.error("Error inserting user:", error);
+                    return res.status(500).json({ ok: false });
+                }
+                next();
+            })
             // Generate JWT token for the newly registered user
             const token = jwt.sign({ userId: results.insertId }, process.env.JWT_SECRET, { expiresIn: "1h" });
 
             // Return the inserted user data and token
-            const insertedUser = { id: results.insertId, username, email };
+            const insertedUser = { id: results.insertId, username: name, email };
+
             res.status(200).json({ user: insertedUser, token, ok: true })
-        });
+        })
+
     } catch (error) {
         console.error("Error hashing password:", error);
         res.status(500).json({ ok: false, error, credentials: req.body });
     }
 }
 
-exports.sendMailToAdmin = async (req, res) => {
-    const { email } = req.body;
-    // console.log(req.body);
-    try {
-        const resposta = await sendEmailToAdmin(req.user, email);
-        res.status(200).json({ message: "Email sent", ok: true, resposta });
-    } catch (error) {
-        console.log(error);
-    }
-
-}
 
