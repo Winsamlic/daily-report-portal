@@ -1,4 +1,4 @@
-const { register, login, sendMailToAdmin, confirmAdmin } = require("../controllers/auth.controller");
+const { register, login, sendMailToAdmin, confirmAdmin, logout } = require("../controllers/auth.controller");
 const { requireSign } = require("../middleware");
 const router = require(`express`).Router();
 
@@ -15,5 +15,6 @@ router.get(`/confirm-page/:token`, (req, res) => {
 });
 
 router.post(`/confirm-admin`, confirmAdmin);
+router.get(`/logout`, logout)
 
 module.exports = router;

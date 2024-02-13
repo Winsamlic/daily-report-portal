@@ -6,6 +6,7 @@ require("dotenv").config();
 const app = express();
 const port = 3001;
 const authRoutes = require("./routes/auth.route");
+const reportRoutes = require("./routes/report.route")
 const api = process.env.API_URL;
 
 // CSRF protection middleware
@@ -21,7 +22,7 @@ app.use(csrf({ cookie: true }));
 
 
 app.use(`${api}/users`, authRoutes);
-
+app.use(`${api}/reports`, reportRoutes)
 
 
 

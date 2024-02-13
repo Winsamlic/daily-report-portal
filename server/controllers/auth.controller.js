@@ -8,6 +8,7 @@ exports.login = async (req, res) => {
 
     try {
         const { email, password } = req.body;
+        // console.log({ email, password });
         // Query the user from the database based on username or email
         const sql = `SELECT * FROM users WHERE email = ?`;
         const values = [email];
@@ -151,5 +152,15 @@ exports.confirmAdmin = async (req, res, next) => {
         res.status(500).json({ ok: false, error, credentials: req.body });
     }
 }
+
+exports.logout = async (req, res) => {
+    try {
+        res.clearCookie("token");
+
+        return res.json({ msg: "SignOut Success" });
+    } catch (err) {
+        console.log(err);
+    }
+};
 
 
